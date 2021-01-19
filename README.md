@@ -2,4 +2,6 @@
 
 Learn the Akka actor model with Scala and write parallel, concurrent and fault-tolerant systems.
 
+## Sobre
+
 Projeto gerado e versionado conforme acompanhamento do curso da Udemy.
