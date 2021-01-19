@@ -1,6 +1,7 @@
 package com.github.argentino.udemy.akka
 package part1recap
 
+import scala.annotation.tailrec
 import scala.util.Try
 
 object GeneralRecap extends App {
@@ -21,11 +22,12 @@ object GeneralRecap extends App {
 
   // types
   // Unit
-  val theUnit = println("Hello, Scala")
+  val theUnit: Unit = println("Hello, Scala")
 
   def aFunction(x: Int): Int = x + 1
 
   // recursion - TAIL recursion
+  @tailrec
   def factorial(n: Int, acc: Int): Int =
     if (n <= 0) acc
     else factorial(n - 1, acc * n)
@@ -69,7 +71,7 @@ object GeneralRecap extends App {
   val aPotentialFailure = try {
     throw new RuntimeException("I'm innocent, I swear!")
   } catch {
-    case e: Exception => "I caught an exception!"
+    case _: Exception => "I caught an exception!"
   } finally {
     // side effects
     println("some logs")
@@ -77,7 +79,7 @@ object GeneralRecap extends App {
 
   // Functional programming
 
-  val incrementer = new Function1[Int, Int] {
+  val incrementer = new (Int => Int) {
     override def apply(v1: Int): Int = v1 + 1
   }
 
