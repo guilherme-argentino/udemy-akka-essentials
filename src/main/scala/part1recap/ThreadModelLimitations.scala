@@ -82,7 +82,7 @@ object ThreadModelLimitations extends App {
   /**
    * DR #3: tracing and dealing with errors in a multithreaded env is a PITN
    */
-  // 1M numbersw in between 10 threads
+  // 1M numbers in between 10 threads
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val futures = (0 to 9)
