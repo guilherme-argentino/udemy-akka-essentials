@@ -121,8 +121,16 @@ object ChangingActorBehavior extends App {
   class Counter extends Actor {
     import Counter._
 
-    override def receive: Receive = {
-      ???
+    override def receive: Receive = ???
+
+    def incrementReceive : Receive ={
+      case Increment => context.become(incrementReceive, false)
+      case Decrement => context.become(decrementReceive, false)
+    }
+
+    def decrementReceive : Receive ={
+      case Increment => context.become(incrementReceive, false)
+      case Decrement => context.become(decrementReceive, false)
     }
   }
 
