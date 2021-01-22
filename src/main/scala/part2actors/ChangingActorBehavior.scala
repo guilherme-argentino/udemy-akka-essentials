@@ -94,4 +94,9 @@ object ChangingActorBehavior extends App {
     mom receives KidReject
    */
 
+  /*
+    Food(veg) -> stack.push(sadReceive)
+    Food(chocolate) -> stach.push(happyReceive)
+   */
+
 }
