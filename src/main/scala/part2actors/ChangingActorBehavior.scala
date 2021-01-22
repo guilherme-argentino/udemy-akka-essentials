@@ -121,16 +121,16 @@ object ChangingActorBehavior extends App {
   class Counter extends Actor {
     import Counter._
 
-    override def receive: Receive = ???
+    override def receive: Receive = countReceive(0)
 
-    def incrementReceive : Receive ={
-      case Increment => context.become(incrementReceive, false)
-      case Decrement => context.become(decrementReceive, false)
-    }
-
-    def decrementReceive : Receive ={
-      case Increment => context.become(incrementReceive, false)
-      case Decrement => context.become(decrementReceive, false)
+    def countReceive(currentCount: Int) : Receive = {
+      case Increment =>
+        println(s"[$currentCount] incrementing")
+        context.become(countReceive(currentCount + 1))
+      case Decrement =>
+        println(s"[$currentCount] decrementing")
+        context.become(countReceive(currentCount - 1))
+      case Print => println(s"[counter] My current count is $currentCount")
     }
   }
 
@@ -147,30 +147,30 @@ object ChangingActorBehavior extends App {
    * 2 - a simplified voting system
    */
 
-  case class Vote(candidate: String)
-  case object VoteStatusRequest
-  case class VoteStatusReply(candidate: Option[String])
-  class Citizen extends Actor {
-    override def receive: Receive = ??? // TODO
-  }
-
-  case class AggregateVotes(citizens: Set[ActorRef])
-  class VoteAggregator extends Actor {
-    override def receive: Receive = ???
-  }
-
-  val alice = system.actorOf(Props[Citizen])
-  val bob = system.actorOf(Props[Citizen])
-  val charlie = system.actorOf(Props[Citizen])
-  val daniel = system.actorOf(Props[Citizen])
-
-  alice ! Vote("Martin")
-  bob ! Vote("Jonas")
-  charlie ! Vote("Roland")
-  daniel ! Vote("Roland")
-
-  val voteAggregator = system.actorOf(Props[VoteAggregator])
-  voteAggregator ! AggregateVotes(Set(alice, bob, charlie, daniel))
+//  case class Vote(candidate: String)
+//  case object VoteStatusRequest
+//  case class VoteStatusReply(candidate: Option[String])
+//  class Citizen extends Actor {
+//    override def receive: Receive = ??? // TODO
+//  }
+//
+//  case class AggregateVotes(citizens: Set[ActorRef])
+//  class VoteAggregator extends Actor {
+//    override def receive: Receive = ???
+//  }
+//
+//  val alice = system.actorOf(Props[Citizen])
+//  val bob = system.actorOf(Props[Citizen])
+//  val charlie = system.actorOf(Props[Citizen])
+//  val daniel = system.actorOf(Props[Citizen])
+//
+//  alice ! Vote("Martin")
+//  bob ! Vote("Jonas")
+//  charlie ! Vote("Roland")
+//  daniel ! Vote("Roland")
+//
+//  val voteAggregator = system.actorOf(Props[VoteAggregator])
+//  voteAggregator ! AggregateVotes(Set(alice, bob, charlie, daniel))
 
   /*
   Print the status of the votes
