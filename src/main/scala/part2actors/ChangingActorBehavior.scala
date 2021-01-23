@@ -165,33 +165,41 @@ object ChangingActorBehavior extends App {
     case object VoteStatusRequest
     case class VoteStatusReply(candidate: Option[String])
     class Citizen extends Actor {
-      var candidate: Option[String] = None
+
+      def voted(candidate: String): Receive = {
+        case VoteStatusRequest => sender() ! VoteStatusReply(Some(candidate))
+      }
+
       override def receive: Receive = {
-        case Vote(c) => candidate = Some(c)
-        case VoteStatusRequest => sender() ! VoteStatusReply(candidate)
+        case Vote(c) => context.become(voted(c))
+        case VoteStatusRequest => sender() ! VoteStatusReply(None)
       }
     }
 
     case class AggregateVotes(citizens: Set[ActorRef])
     class VoteAggregator extends Actor {
-      var stillWaiting: Set[ActorRef] = Set()
-      var currentStats: Map[String, Int] = Map()
 
-      override def receive: Receive = {
+      override def receive: Receive = awaitingCommand
+
+      def awaitingCommand: Receive = {
         case AggregateVotes(citizens) =>
-          stillWaiting = citizens
           citizens.foreach(citizenRef => citizenRef ! VoteStatusRequest)
+          context.become(awaitingStatuses(citizens, Map()))
+      }
+
+      def awaitingStatuses(stillWaiting: Set[ActorRef], currentStats: Map[String, Int]): Receive = {
         case VoteStatusReply(None) =>
           // a citizen hasn't voted yet
           sender() ! VoteStatusRequest // this might end up in an infinite loop
         case VoteStatusReply(Some(candidate)) =>
           val newStillWaiting = stillWaiting - sender()
           val currentVotesOfCandidate = currentStats.getOrElse(candidate, 0)
-          currentStats = currentStats + (candidate -> (currentVotesOfCandidate + 1))
+          val newStats = currentStats + (candidate -> (currentVotesOfCandidate + 1))
           if (newStillWaiting.isEmpty) {
-            println(s"[aggregator] poll stats: $currentStats")
+            println(s"[aggregator] poll stats: $newStats")
           } else {
-            stillWaiting = newStillWaiting
+            // still need to process some statuses
+            context.become(awaitingStatuses(newStillWaiting, newStats))
           }
       }
     }
