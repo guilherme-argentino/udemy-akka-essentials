@@ -1,7 +1,7 @@
 package com.github.argentino.udemy.akka
 package part2actors
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 
 object ChildActors extends App {
 
@@ -14,15 +14,16 @@ object ChildActors extends App {
   class Parent extends Actor {
     import Parent._
 
-    var child: ActorRef = null
     override def receive: Receive = {
       case CreateChild(name) =>
         println(s"${self.path} creating child")
         // create a new actor right HERE
         val childRef = context.actorOf(Props[Child], name)
-        child = childRef
-      case TellChild(message) =>
-        if(child != null) child forward message
+        context.become(withChild(childRef))
+    }
+
+    def withChild(childRef: ActorRef): Receive = {
+      case TellChild(message) => childRef forward message
     }
   }
 
@@ -31,5 +32,12 @@ object ChildActors extends App {
       case message => println(s"${self.path} I got: $message")
     }
   }
+
+  import Parent._
+
+  val system = ActorSystem("ParentChildDemo")
+  val parent = system.actorOf(Props[Parent], "parent")
+  parent ! CreateChild("child")
+  parent ! TellChild("hey Kid!")
 
 }
