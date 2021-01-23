@@ -42,13 +42,13 @@ object ChangingActorBehavior extends App {
     override def receive: Receive = happyReceive
 
     def happyReceive: Receive = {
-      case Food(VEGETABLE) => context.become(sadReceive, false) // change my receive handler to sadReceive
+      case Food(VEGETABLE) => context.become(sadReceive, discardOld = false) // change my receive handler to sadReceive
       case Food(CHOCOLATE) => // stay happy
       case Ask(_) => sender() ! KidAccept
     }
 
     def sadReceive: Receive = {
-      case Food(VEGETABLE) => context.become(sadReceive, false)
+      case Food(VEGETABLE) => context.become(sadReceive, discardOld = false)
       case Food(CHOCOLATE) => context.unbecome() // change my receive handler to happyReceive
       case Ask(_) => sender() ! KidReject
     }
@@ -99,7 +99,7 @@ object ChangingActorBehavior extends App {
 
   /*
     Food(veg) -> stack.push(sadReceive)
-    Food(chocolate) -> stach.push(happyReceive)
+    Food(chocolate) -> stack.push(happyReceive)
 
     Stack:
     1. happyReceive
