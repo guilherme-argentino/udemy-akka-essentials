@@ -5,6 +5,7 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.TestActor.NullMessage.sender
 
 import scala.annotation.tailrec
+import scala.collection.immutable
 import scala.collection.mutable.ListBuffer
 
 object ChildActorsExercise extends App {
@@ -15,9 +16,9 @@ object ChildActorsExercise extends App {
 
     case class Initialize(nChildren: Int)
 
-    case class WordCountTask(/* TODO */ text: String)
+    case class WordCountTask(id: Int, text: String)
 
-    case class WordCountReply(text:String, count: Int)
+    case class WordCountReply(id: Int, count: Int)
 
   }
 
@@ -25,24 +26,28 @@ object ChildActorsExercise extends App {
 
     import WordCounterMaster._
 
-    var childrenActors: List[ActorRef] = null
+    def withChildren(childrenRefs: Seq[ActorRef], currentChildIndex: Int, currentTaskId: Int, requestMap: Map[Int, ActorRef]): Receive = {
+      case text: String =>
+        println(s"[master] I have received: $text - I will send it to child $currentChildIndex")
+        val originalSender = sender()
+        val task = WordCountTask(currentTaskId, text)
+        val childRef = childrenRefs(currentChildIndex)
+        childRef ! task
+        val nextChildIndex = (currentChildIndex + 1) % childrenRefs.length
+        val nextCurrentTaskId = currentTaskId + 1
+        val newRequestMap = requestMap + (currentTaskId -> originalSender)
+        context.become(withChildren(childrenRefs, nextChildIndex, nextCurrentTaskId, newRequestMap))
+      case WordCountReply(id, count) =>
+        println(s"[master] I have received a reply for task id $id with $count")
+        val originalSender = requestMap(id)
+        originalSender ! count
+        context.become(withChildren(childrenRefs, currentChildIndex, currentTaskId, requestMap - id))
+    }
 
     override def receive: Receive = {
       case Initialize(nChildren) =>
-        childrenActors = List.tabulate(nChildren)(n => context.actorOf(Props[WordCounterWorker], s"worker-${n}"))
-      case message: WordCountTask =>
-        childrenActors.head ! message
-        childrenActors = circular(childrenActors, 1)
-      case message: WordCountReply =>
-        println(s"[${self.path}] size of '${message.text}' is ${message.count} - processed by [${sender().path}]")
-        sender() ! message // TODO
-    }
-
-    @tailrec
-    private def circular[A](L: List[A], times: Int ): List[A] = {
-
-      if ( times == 0 || L.size < 2 ) L
-      else circular(L.drop(1) :+ L.head , times-1)
+        val childrenRefs = for (i <- 1 to nChildren) yield context.actorOf(Props[WordCounterWorker], s"wcw_$i")
+        context.become(withChildren(childrenRefs, 0, 0, Map()))
     }
 
   }
@@ -52,11 +57,29 @@ object ChildActorsExercise extends App {
     import WordCounterMaster._
 
     override def receive: Receive = {
-      case WordCountTask(message: String) =>
-        println(s"[${self.path}] received $message")
-        sender() ! WordCountReply(message, message.split(" ").length)
+      case WordCountTask(id, text) =>
+        println(s"[${self.path}] I have received task $id with $text")
+        sender() ! WordCountReply(id, text.split(" ").length)
     }
   }
+
+  class TestActor extends Actor {
+    import WordCounterMaster._
+
+    override def receive: Receive = {
+      case "go" =>
+        val master = context.actorOf(Props[WordCounterMaster], "master")
+        master ! Initialize(3)
+        val texts = List("I love Akka", "Scala is super dope", "yes", "me too")
+        texts.foreach(text => master ! text)
+      case count: Int =>
+        println(s"[test actor] I received a reply: $count")
+    }
+  }
+
+  val system = ActorSystem("roundRobinWordCountExercise")
+  val testActor = system.actorOf(Props[TestActor], "testActor")
+  testActor ! "go"
 
   /*
     create WordCounterMaster
@@ -74,12 +97,5 @@ object ChildActorsExercise extends App {
   // 1,2,3,4,5 and 7 tasks
   // 1,2,3,4,5,1,2
 
-  val system = ActorSystem("ChildActorsExercise")
-  val wordCounterMaster = system.actorOf(Props[WordCounterMaster], "master-demo")
-
-  import WordCounterMaster._
-
-  wordCounterMaster ! Initialize(5)
-  (1 to 1000).foreach(n => wordCounterMaster ! WordCountTask("Akka is awesome!"))
 
 }
