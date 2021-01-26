@@ -40,6 +40,16 @@ class BasicSpec extends TestKit(ActorSystem("BasicSpec"))
     }
   }
 
+  // message assertions
+  "A lab test actor" should {
+    val labTestActor = system.actorOf(Props[LabTestActor])
+
+    "turn a string into uppercase" in {
+      labTestActor ! "I love Akka"
+      expectMsg("I LOVE AKKA")
+    }
+  }
+
 }
 
 object BasicSpec {
@@ -52,5 +62,11 @@ object BasicSpec {
 
   class BlackHole extends Actor {
     override def receive: Receive = Actor.emptyBehavior
+  }
+
+  class LabTestActor extends Actor {
+    override def receive: Receive = {
+      case message : String => sender() ! message.toUpperCase()
+    }
   }
 }
