@@ -3,8 +3,9 @@ package part3testing
 
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
-import com.github.argentino.udemy.akka.part3testing.BasicSpec.SimpleActor
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+
+import scala.concurrent.duration.DurationInt
 
 class BasicSpec extends TestKit(ActorSystem("BasicSpec"))
   with ImplicitSender
@@ -25,7 +26,7 @@ class BasicSpec extends TestKit(ActorSystem("BasicSpec"))
       val message = "hello, test"
       echoActor ! message
 
-      expectMsg(message)
+      expectMsg(message) // akka.test.single-expect-default
     }
   }
 
@@ -35,7 +36,7 @@ class BasicSpec extends TestKit(ActorSystem("BasicSpec"))
       val message = "hello, test"
       blackHole ! message
 
-      expectMsg(message)
+      expectNoMessage(1 second)
     }
   }
 
