@@ -24,4 +24,8 @@ object TimersSchedulers extends App {
     simpleActor ! "reminder"
   }
 
+  val routine = system.scheduler.schedule(1 second, 2 seconds) {
+    simpleActor ! "heartbeat"
+  }
+
 }
