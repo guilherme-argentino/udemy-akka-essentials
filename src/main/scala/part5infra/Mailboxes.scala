@@ -1,7 +1,7 @@
 package com.github.argentino.udemy.akka
 package part5infra
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorSystem, PoisonPill, Props}
 import akka.dispatch.{PriorityGenerator, UnboundedPriorityMailbox}
 import com.typesafe.config.Config
 
@@ -38,6 +38,7 @@ object Mailboxes extends App {
   // step 3 - attach the dispatcher to an actor
 
   val supportTicketLogger = system.actorOf(Props[SimpleActor].withDispatcher("support-ticket-dispatcher"))
+  supportTicketLogger ! PoisonPill
   supportTicketLogger ! "[P3] this thing would be nice to have"
   supportTicketLogger ! "[P0] this needs to be solved NOW!"
   supportTicketLogger ! "[P1] do this when you have the time"
