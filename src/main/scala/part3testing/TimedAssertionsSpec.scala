@@ -34,7 +34,7 @@ class TimedAssertionsSpec extends TestKit(ActorSystem("TimedAssertionsSpec"))
       within(1 second) {
         workerActor ! "workSequence"
 
-        val results: Seq[Int] = receiveWhile[Int](max = 10 millis, idle = 500 millis, messages = 10) {
+        val results: Seq[Int] = receiveWhile[Int](max = 2 seconds, idle = Duration.Zero, messages = 10) {
           case WorkResult(result) => result
         }
 
