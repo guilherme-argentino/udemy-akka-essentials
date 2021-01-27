@@ -3,7 +3,15 @@ package part6patterns
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
+import akka.util.Timeout
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.util.Success
+
+// step 1 - import the ask pattern
+import akka.pattern.ask
 
 class AskSpec extends TestKit(ActorSystem("AskSpec"))
   with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
@@ -43,17 +51,24 @@ object AskSpec {
 
   class AuthManager extends Actor with ActorLogging {
 
+    // step 2 - logistics
+    implicit val timeout: Timeout = Timeout(1 second)
+    implicit val executionContext: ExecutionContext = context.dispatcher
+
     private val authDb = context.actorOf(Props[KVActor])
 
     override def receive: Receive = {
       case RegisterUser(username, password) => authDb ! Write(username, password)
-      case Authenticate(username, password) => 
-        authDb ! Read(username)
-        context.become(waitingForPassword(username, sender()))
-    }
-
-    def waitingForPassword(username: String, ref: ActorRef): Receive = {
-      case password: Option[String] => // do password checks here
+      case Authenticate(username, password) =>
+        // step 3 - ask the actor
+        val future = authDb ? Read(username)
+        // step 4 - handle the future for e.g. with onComplete
+        future.onComplete {
+          case Success(None) => sender() ! AuthFailure("username not found")
+          case Success(Some(dbPassword)) =>
+            if (dbPassword == password) sender() ! AuthSuccess
+            else sender() ! AuthFailure("password incorrect")
+        }
     }
   }
 }
