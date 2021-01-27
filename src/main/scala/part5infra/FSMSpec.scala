@@ -1,7 +1,7 @@
 package com.github.argentino.udemy.akka
 package part5infra
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Cancellable}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Cancellable, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
@@ -16,6 +16,33 @@ class FSMSpec extends TestKit(ActorSystem("FSMSpec"))
   }
 
   import FSMSpec._
+
+  "a vending machine" should {
+    "error when not initialized" in {
+      val vendingMachine = system.actorOf(Props[VendingMachine])
+      vendingMachine ! RequestProduct("coke")
+      expectMsg(VendingError("MachineNotInitialized"))
+    }
+
+    "report a product not available" in {
+      val vendingMachine = system.actorOf(Props[VendingMachine])
+      vendingMachine ! Initialize(Map("coke" -> 10), Map("coke" -> 1))
+      vendingMachine ! RequestProduct("sandwich")
+      expectMsg(VendingError("ProductNotAvailable"))
+    }
+
+    "throw a timeout if I don't insert money" in {
+      val vendingMachine = system.actorOf(Props[VendingMachine])
+      vendingMachine ! Initialize(Map("coke" -> 10), Map("coke" -> 1))
+
+      vendingMachine ! RequestProduct("coke")
+      expectMsg(Instruction("Please insert 1 dollars"))
+
+      within(1.5 seconds) {
+        expectMsg(VendingError("RequestTimedOut"))
+      }
+    }
+  }
 }
 
 object FSMSpec {
