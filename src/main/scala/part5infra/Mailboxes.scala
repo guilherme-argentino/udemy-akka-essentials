@@ -39,6 +39,7 @@ object Mailboxes extends App {
 
   val supportTicketLogger = system.actorOf(Props[SimpleActor].withDispatcher("support-ticket-dispatcher"))
   supportTicketLogger ! PoisonPill
+  Thread.sleep(1000)
   supportTicketLogger ! "[P3] this thing would be nice to have"
   supportTicketLogger ! "[P0] this needs to be solved NOW!"
   supportTicketLogger ! "[P1] do this when you have the time"
