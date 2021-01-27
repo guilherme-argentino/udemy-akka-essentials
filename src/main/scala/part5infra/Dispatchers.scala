@@ -38,6 +38,7 @@ object Dispatchers extends App {
   class DBActor extends Actor with ActorLogging {
     // solution #1
     implicit val executionContext: ExecutionContext = context.system.dispatchers.lookup("my-dispatcher")
+    // solution #2 - use router
 
     override def receive: Receive = {
       case message => Future {
