@@ -1,7 +1,7 @@
 package com.github.argentino.udemy.akka
 package part5infra
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Cancellable, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Cancellable, FSM, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
@@ -159,6 +159,37 @@ object FSMSpec {
 
     def startReceiveMoneyTimeoutSchedule = context.system.scheduler.scheduleOnce(1 second) {
       self ! ReceiveMoneyTimeout
+    }
+  }
+
+  // step 1 - define the states and the data of the actor
+  trait VendingState
+  case object Idle extends VendingState
+  case object Operational extends VendingState
+  case object WaitForMoney extends VendingState
+
+  trait VendingData
+  case object Uninitialized extends VendingData
+  case class Initialized(inventory: Map[String, Int], prices: Map[String, Int]) extends VendingData
+  case class WaitForMoneyData(inventory: Map[String, Int], prices: Map[String, Int], product: String, money: Int, requester: ActorRef) extends VendingData
+
+  class VendingMachineFSM extends FSM[VendingState, VendingData] {
+    // we don't have a receive handler
+
+    // an EVENT(message, data)
+
+    startWith(Idle, Uninitialized)
+
+    when(Idle) {
+      ???
+    }
+
+    when(Operational) {
+      ???
+    }
+
+    when(WaitForMoney) {
+      ???
     }
   }
 }
