@@ -78,9 +78,24 @@ object BackoffSupervisorPattern extends App {
     }
   }
 
-  val eagerActor = system.actorOf(Props[EagerFBPActor])
-
   // ActorInitializationException => STOP
 
+  val repeatedSupervisorProps = BackoffSupervisor.props(
+    Backoff.onStop(
+      Props[EagerFBPActor],
+      "eagerActor",
+      1 seconds,
+      30 seconds,
+      0.1
+    )
+  )
+  val repeatedSupervisor = system.actorOf(repeatedSupervisorProps, "eagerSupervisor")
 
+  /*
+    eagerSupervisor
+      - child eagerActor
+        - will die on start with ActorInitializationException
+        - trigger the supervision strategy in eagerSupervisor => STOP eagerActor
+      - backoff will kick in after 1 second, 2s, 4, 8, 16
+  */
 }
