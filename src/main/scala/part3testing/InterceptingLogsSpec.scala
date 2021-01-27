@@ -24,7 +24,7 @@ class InterceptingLogsSpec extends TestKit(
   val invalidCreditCard = "0000-0000-0000-0000"
   "A checkout flow" should {
     "correctly log the dispatch of an order" in {
-      EventFilter.info(pattern = s"Order [0-9]+ for item $item has ben dispatched.", occurrences = 1) intercept {
+      EventFilter.info(pattern = s"Order [0-9]+ for item $item has been dispatched.", occurrences = 1) intercept {
         // out test code
         val checkoutRef = system.actorOf(Props[CheckoutActor])
         checkoutRef ! Checkout(item, creditCard)
