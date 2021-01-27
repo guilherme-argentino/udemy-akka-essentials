@@ -4,17 +4,10 @@ package part4faulttolerance
 import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume, Stop}
 import akka.actor.{Actor, ActorRef, ActorSystem, AllForOneStrategy, OneForOneStrategy, Props, SupervisorStrategy, Terminated}
 import akka.testkit.{EventFilter, ImplicitSender, TestKit}
-import com.github.argentino.udemy.akka.part3testing.TestProbeSpec.Report
-import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
-import java.lang
-
-class SupervisionSpec extends TestKit(
-  ActorSystem("SupervisionSpec"))
-  with ImplicitSender
-  with WordSpecLike
-  with BeforeAndAfterAll {
+class SupervisionSpec extends TestKit(ActorSystem("SupervisionSpec"))
+  with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -49,6 +42,17 @@ class SupervisionSpec extends TestKit(
       child ! ""
       child ! Report
       expectMsg(0)
+    }
+
+    "terminate its child in case of a major error" in {
+      val supervisor = system.actorOf(Props[Supervisor])
+      supervisor ! Props[FussyWordCounter]
+      val child = expectMsgType[ActorRef]
+
+      watch(child)
+      child ! "akka is nice"
+      val terminatedMessage = expectMsgType[Terminated]
+      assert(terminatedMessage.actor == child)
     }
 
     "escalate an error when it doesn't know what to do" in {
@@ -123,7 +127,7 @@ object SupervisionSpec {
   }
 
   class NoDeathOnRestartSupervisor extends Supervisor {
-    override def postRestart(reason: Throwable): Unit = {
+    override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
       // empty
     }
   }
@@ -137,6 +141,7 @@ object SupervisionSpec {
     }
   }
 
+  case object Report
   class FussyWordCounter extends Actor {
     var words = 0
 
