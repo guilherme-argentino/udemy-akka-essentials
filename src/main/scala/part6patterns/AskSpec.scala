@@ -22,6 +22,16 @@ class AskSpec extends TestKit(ActorSystem("AskSpec"))
 
   import AskSpec._
 
+  "An authenticator" should {
+    import AuthManager._
+
+    "fail to authenticate a non-registered user" in {
+      val authManager = system.actorOf(Props[AuthManager])
+      authManager ! Authenticate("daniel", "rtjvm")
+      expectMsg(AuthFailure(AUTH_FAILURE_NOT_FOUND))
+    }
+  }
+
 }
 
 object AskSpec {
@@ -51,7 +61,14 @@ object AskSpec {
   case class AuthFailure(message: String)
   case object AuthSuccess
 
+  object AuthManager {
+    val AUTH_FAILURE_NOT_FOUND = "username not found"
+    val AUTH_FAILURE_PASSWORD_INCORRECT = "password incorrect"
+    val AUTH_FAILURE_SYSTEM = "system error"
+  }
+
   class AuthManager extends Actor with ActorLogging {
+    import AuthManager._
 
     // step 2 - logistics
     implicit val timeout: Timeout = Timeout(1 second)
@@ -70,11 +87,11 @@ object AskSpec {
           // step 5 most important
           // NEVER CALL METHODS ON THE ACTOR INSTANCE OR ACCESS MUTABLE STATE IN ONCOMPLETE
           // avoid closing over the actor instance or mutable state
-          case Success(None) => originalSender ! AuthFailure("username not found")
+          case Success(None) => originalSender ! AuthFailure(AUTH_FAILURE_NOT_FOUND)
           case Success(Some(dbPassword)) =>
-            if (dbPassword == password) originalSender  ! AuthSuccess
-            else originalSender  ! AuthFailure("password incorrect")
-          case Failure(_) => originalSender ! AuthFailure("system error")
+            if (dbPassword == password) originalSender ! AuthSuccess
+            else originalSender ! AuthFailure(AUTH_FAILURE_PASSWORD_INCORRECT)
+          case Failure(_) => originalSender ! AuthFailure(AUTH_FAILURE_SYSTEM)
         }
     }
   }
