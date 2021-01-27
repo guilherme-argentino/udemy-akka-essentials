@@ -24,47 +24,31 @@ class AskSpec extends TestKit(ActorSystem("AskSpec"))
   import AskSpec._
 
   "An authenticator" should {
-    import AuthManager._
-
-    "fail to authenticate a non-registered user" in {
-      val authManager = system.actorOf(Props[AuthManager])
-      authManager ! Authenticate("daniel", "rtjvm")
-      expectMsg(AuthFailure(AUTH_FAILURE_NOT_FOUND))
-    }
-
-    "fail to authenticate if invalid password" in {
-      val authManager = system.actorOf(Props[AuthManager])
-      authManager ! RegisterUser("daniel", "rtjvm")
-      authManager ! Authenticate("daniel", "iloveakka")
-      expectMsg(AuthFailure(AUTH_FAILURE_PASSWORD_INCORRECT))
-    }
-
-    "successfully authenticate a registered user" in {
-      val authManager = system.actorOf(Props[AuthManager])
-      authManager ! RegisterUser("daniel", "rtjvm")
-      authManager ! Authenticate("daniel", "rtjvm")
-      expectMsg(AuthSuccess)
-    }
+    authenticatorTestSuite(Props[AuthManager])
   }
 
   "A piped authenticator" should {
+    authenticatorTestSuite(Props[PipedAuthManager])
+  }
+
+  def authenticatorTestSuite(props: Props): Unit = {
     import AuthManager._
 
     "fail to authenticate a non-registered user" in {
-      val authManager = system.actorOf(Props[PipedAuthManager])
+      val authManager = system.actorOf(props)
       authManager ! Authenticate("daniel", "rtjvm")
       expectMsg(AuthFailure(AUTH_FAILURE_NOT_FOUND))
     }
 
     "fail to authenticate if invalid password" in {
-      val authManager = system.actorOf(Props[PipedAuthManager])
+      val authManager = system.actorOf(props)
       authManager ! RegisterUser("daniel", "rtjvm")
       authManager ! Authenticate("daniel", "iloveakka")
       expectMsg(AuthFailure(AUTH_FAILURE_PASSWORD_INCORRECT))
     }
 
     "successfully authenticate a registered user" in {
-      val authManager = system.actorOf(Props[PipedAuthManager])
+      val authManager = system.actorOf(props)
       authManager ! RegisterUser("daniel", "rtjvm")
       authManager ! Authenticate("daniel", "rtjvm")
       expectMsg(AuthSuccess)
@@ -113,14 +97,14 @@ object AskSpec {
     implicit val timeout: Timeout = Timeout(1 second)
     implicit val executionContext: ExecutionContext = context.dispatcher
 
-    protected val authDb = context.actorOf(Props[KVActor])
+    protected val authDb: ActorRef = context.actorOf(Props[KVActor])
 
     override def receive: Receive = {
       case RegisterUser(username, password) => authDb ! Write(username, password)
       case Authenticate(username, password) => handleAuthentication(username, password)
     }
 
-    def handleAuthentication(username: String, password: String) = {
+    def handleAuthentication(username: String, password: String): Unit = {
       val originalSender = sender()
       // step 3 - ask the actor
       val future = authDb ? Read(username)
