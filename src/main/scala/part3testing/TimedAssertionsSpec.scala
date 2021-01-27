@@ -24,7 +24,7 @@ class TimedAssertionsSpec extends TestKit(ActorSystem("TimedAssertionsSpec"))
     val workerActor = system.actorOf(Props[WorkerActor])
 
     "reply with the meaning of life in a timely manner" in {
-      within(500 millis, 1 second) {
+      within(300 millis) {
         workerActor ! "work"
         expectMsg(WorkResult(42))
       }
