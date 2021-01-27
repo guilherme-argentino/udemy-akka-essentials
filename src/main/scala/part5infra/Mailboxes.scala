@@ -55,9 +55,15 @@ object Mailboxes extends App {
     step 2 - configure who gets the mailbox
     - make the actor attach to the mailbox
    */
-
+  // method #1
   val controlAwareActor = system.actorOf(Props[SimpleActor].withMailbox("control-mailbox"))
-  controlAwareActor ! "[P0] this needs to be solved NOW!"
-  controlAwareActor ! "[P1] do this when you have the time"
-  controlAwareActor ! ManagementTicket
+//  controlAwareActor ! "[P0] this needs to be solved NOW!"
+//  controlAwareActor ! "[P1] do this when you have the time"
+//  controlAwareActor ! ManagementTicket
+
+  // method #2 - using deployment config
+  val altControlAwareActor = system.actorOf(Props[SimpleActor], "altControlAwareActor")
+  altControlAwareActor ! "[P0] this needs to be solved NOW!"
+  altControlAwareActor ! "[P1] do this when you have the time"
+  altControlAwareActor ! ManagementTicket
 }
