@@ -3,12 +3,14 @@ package part3testing
 
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
 import scala.concurrent.duration._
 import scala.util.Random
 
-class TimedAssertionsSpec extends TestKit(ActorSystem("TimedAssertionsSpec"))
+class TimedAssertionsSpec extends TestKit(
+  ActorSystem("TimedAssertionsSpec", ConfigFactory.load().getConfig("specialTimedAssertionsConfig")))
   with ImplicitSender
   with WordSpecLike
   with BeforeAndAfterAll {
@@ -46,7 +48,7 @@ class TimedAssertionsSpec extends TestKit(ActorSystem("TimedAssertionsSpec"))
       within(1 second) {
         val probe = TestProbe()
         probe.send(workerActor, "work")
-        probe.expectMsg(WorkResult(42))
+        probe.expectMsg(WorkResult(42)) // timeout of 0.3 seconds
       }
     }
   }
