@@ -24,7 +24,7 @@ class TimedAssertionsSpec extends TestKit(ActorSystem("TimedAssertionsSpec"))
     val workerActor = system.actorOf(Props[WorkerActor])
 
     "reply with the meaning of life in a timely manner" in {
-      within(300 millis) {
+      within(500 millis, 1 second) {
         workerActor ! "work"
         expectMsg(WorkResult(42))
       }
@@ -41,7 +41,7 @@ object TimedAssertionsSpec {
     override def receive: Receive = {
       case "work" =>
         // long computation
-        Thread.sleep(500)
+//        Thread.sleep(500)
         sender ! WorkResult(42)
 
       case "workSequence" =>
