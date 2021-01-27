@@ -28,7 +28,9 @@ object AskSpec {
 
   // this code is somewhere else in your app
   case class Read(key: String)
+
   case class Write(key: String, value: String)
+
   class KVActor extends Actor with ActorLogging {
 
     override def receive: Receive = online(Map())
@@ -60,15 +62,20 @@ object AskSpec {
     override def receive: Receive = {
       case RegisterUser(username, password) => authDb ! Write(username, password)
       case Authenticate(username, password) =>
+        val originalSender = sender()
         // step 3 - ask the actor
         val future = authDb ? Read(username)
         // step 4 - handle the future for e.g. with onComplete
         future.onComplete {
-          case Success(None) => sender() ! AuthFailure("username not found")
+          // step 5 most important
+          // NEVER CALL METHODS ON THE ACTOR INSTANCE OR ACCESS MUTABLE STATE IN ONCOMPLETE
+          // avoid closing over the actor instance or mutable state
+          case Success(None) => originalSender ! AuthFailure("username not found")
           case Success(Some(dbPassword)) =>
-            if (dbPassword == password) sender() ! AuthSuccess
-            else sender() ! AuthFailure("password incorrect")
+            if (dbPassword == password) originalSender  ! AuthSuccess
+            else originalSender  ! AuthFailure("password incorrect")
         }
     }
   }
+
 }
