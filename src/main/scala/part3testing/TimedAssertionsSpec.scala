@@ -41,7 +41,7 @@ object TimedAssertionsSpec {
     override def receive: Receive = {
       case "work" =>
         // long computation
-//        Thread.sleep(500)
+        Thread.sleep(500)
         sender ! WorkResult(42)
 
       case "workSequence" =>
