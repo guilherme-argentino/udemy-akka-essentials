@@ -43,9 +43,11 @@ class TimedAssertionsSpec extends TestKit(ActorSystem("TimedAssertionsSpec"))
     }
 
     "reply to a test probe in a timely manner" in {
-      val probe = TestProbe()
-      probe.send(workerActor,"work")
-      probe.expectMsg(WorkResult(42))
+      within(1 second) {
+        val probe = TestProbe()
+        probe.send(workerActor, "work")
+        probe.expectMsg(WorkResult(42))
+      }
     }
   }
 
